@@ -35,7 +35,7 @@ import (
 	nfsexports "github.com/johanneswuerbach/nfsexports"
 	hyperkit "github.com/moby/hyperkit/go"
 	"github.com/pkg/errors"
-	pkgdrivers "k8s.io/minikube/pkg/drivers"
+	pkgdrivers "github.com/praveenkumar/docker-machine-driver-hyperkit/pkg/drivers"
 	commonutil "k8s.io/minikube/pkg/util"
 )
 
