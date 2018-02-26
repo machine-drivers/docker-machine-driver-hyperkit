@@ -36,7 +36,6 @@ import (
 	hyperkit "github.com/moby/hyperkit/go"
 	"github.com/pkg/errors"
 	pkgdrivers "github.com/praveenkumar/docker-machine-driver-hyperkit/pkg/drivers"
-	commonutil "k8s.io/minikube/pkg/util"
 )
 
 const (
@@ -204,12 +203,12 @@ func (d *Driver) Start() error {
 		var err error
 		d.IPAddress, err = GetIPAddressByMACAddress(mac)
 		if err != nil {
-			return &commonutil.RetriableError{Err: err}
+			return &RetriableError{Err: err}
 		}
 		return nil
 	}
 
-	if err := commonutil.RetryAfter(30, getIP, 2*time.Second); err != nil {
+	if err := RetryAfter(30, getIP, 2*time.Second); err != nil {
 		return fmt.Errorf("IP address never found in dhcp leases file %v", err)
 	}
 
