@@ -20,6 +20,11 @@ import (
 	"time"
 	"errors"
 	"strings"
+	"os/exec"
+	"os"
+	"github.com/docker/machine/libmachine/log"
+	"bufio"
+	"fmt"
 )
 
 type RetriableError struct {
@@ -66,4 +71,36 @@ func RetryAfter(attempts int, callback func() error, d time.Duration) (err error
 		time.Sleep(d)
 	}
 	return m.ToError()
+}
+
+func hdiutil(args ...string) error {
+	cmd := exec.Command("hdiutil", args...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	log.Debugf("executing: %v %v", cmd, strings.Join(args, " "))
+
+	err := cmd.Run()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func readLine(path string) (string, error) {
+	inFile, err := os.Open(path)
+	if err != nil {
+		return "", err
+	}
+	defer inFile.Close()
+
+	scanner := bufio.NewScanner(inFile)
+	for scanner.Scan() {
+		if kernelOptionRegexp.Match(scanner.Bytes()) {
+			m := kernelOptionRegexp.FindSubmatch(scanner.Bytes())
+			return string(m[1]), nil
+		}
+	}
+	return "", fmt.Errorf("couldn't find kernel option from %s image", path)
 }

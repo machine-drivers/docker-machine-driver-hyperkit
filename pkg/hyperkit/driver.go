@@ -36,15 +36,23 @@ import (
 	hyperkit "github.com/moby/hyperkit/go"
 	"github.com/pkg/errors"
 	pkgdrivers "github.com/praveenkumar/docker-machine-driver-hyperkit/pkg/drivers"
+	"regexp"
+	"github.com/docker/machine/libmachine/mcnutils"
 )
 
 const (
 	isoFilename     = "boot2docker.iso"
+	isoMountPath    = "b2d-image"
 	pidFileName     = "hyperkit.pid"
 	machineFileName = "hyperkit.json"
 	permErr         = "%s needs to run with elevated permissions. " +
 		"Please run the following command, then try again: " +
 		"sudo chown root:wheel %s && sudo chmod u+s %s"
+)
+
+var (
+	kernelRegexp       = regexp.MustCompile(`(vmlinu[xz]|bzImage)[\d]*`)
+	kernelOptionRegexp = regexp.MustCompile(`(?:\t|\s{2})append\s+([[:print:]]+)`)
 )
 
 type Driver struct {
@@ -58,6 +66,10 @@ type Driver struct {
 	NFSShares      []string
 	NFSSharesRoot  string
 	UUID           string
+	BootKernel string
+	BootInitrd string
+	Initrd     string
+	Vmlinuz    string
 }
 
 func NewDriver(hostName, storePath string) *Driver {
@@ -169,8 +181,8 @@ func (d *Driver) Start() error {
 	}
 
 	// TODO: handle the rest of our settings.
-	h.Kernel = d.ResolveStorePath("bzimage")
-	h.Initrd = d.ResolveStorePath("initrd")
+	h.Kernel = d.ResolveStorePath(d.Vmlinuz)
+	h.Initrd =d.ResolveStorePath(d.Initrd)
 	h.VMNet = true
 	h.ISOImages = []string{d.ResolveStorePath(isoFilename)}
 	h.Console = hyperkit.ConsoleFile
@@ -233,19 +245,54 @@ func (d *Driver) Stop() error {
 }
 
 func (d *Driver) extractKernel(isoPath string) error {
-	for _, f := range []struct {
-		pathInIso string
-		destPath  string
-	}{
-		{"/boot/bzimage", "bzimage"},
-		{"/boot/initrd", "initrd"},
-		{"/isolinux/isolinux.cfg", "isolinux.cfg"},
-	} {
-		fullDestPath := d.ResolveStorePath(f.destPath)
-		if err := ExtractFile(isoPath, f.pathInIso, fullDestPath); err != nil {
-			return err
-		}
+	log.Debugf("Mounting %s", isoFilename)
+
+	volumeRootDir := d.ResolveStorePath(isoMountPath)
+	err := hdiutil("attach", d.ResolveStorePath(isoFilename), "-mountpoint", volumeRootDir)
+	if err != nil {
+		return err
 	}
+	defer func() error {
+		log.Debugf("Unmounting %s", isoFilename)
+		return hdiutil("detach", volumeRootDir)
+	}()
+
+	log.Debugf("Extracting Kernel Options...")
+	if err := d.extractKernelOptions(); err != nil {
+		return err
+	}
+
+	if d.BootKernel == "" && d.BootInitrd == "" {
+		filepath.Walk(volumeRootDir, func(path string, f os.FileInfo, err error) error {
+			if kernelRegexp.MatchString(path) {
+				d.BootKernel = path
+				_, d.Vmlinuz = filepath.Split(path)
+			}
+			if strings.Contains(path, "initrd") {
+				d.BootInitrd = path
+				_, d.Initrd = filepath.Split(path)
+			}
+			return nil
+		})
+	}
+	
+	if  d.BootKernel == "" || d.BootInitrd == "" {
+		err := fmt.Errorf("==== Can't extract Kernel and Ramdisk file ====")
+		return err
+		}
+
+	dest := d.ResolveStorePath(d.Vmlinuz)
+	log.Debugf("Extracting %s into %s", d.BootKernel, dest)
+	if err := mcnutils.CopyFile(d.BootKernel, dest); err != nil {
+		return err
+	}
+
+	dest = d.ResolveStorePath(d.Initrd)
+	log.Debugf("Extracting %s into %s", d.BootInitrd, dest)
+	if err := mcnutils.CopyFile(d.BootInitrd, dest); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -340,4 +387,29 @@ func (d *Driver) cleanupNfsExports() {
 			log.Errorf("failed to reload the nfs daemon: %s", err.Error())
 		}
 	}
+}
+
+func (d *Driver) extractKernelOptions() error {
+	volumeRootDir := d.ResolveStorePath(isoMountPath)
+	if d.Cmdline == "" {
+		err := filepath.Walk(volumeRootDir, func(path string, f os.FileInfo, err error) error {
+			if strings.Contains(path, "isolinux.cfg") {
+				d.Cmdline, err = readLine(path)
+				if err != nil {
+					return err
+				}
+			}
+			return nil
+		})
+		if err != nil {
+			return err
+		}
+
+		if d.Cmdline == "" {
+			return errors.New("Not able to parse isolinux.cfg")
+		}
+	}
+
+	log.Debugf("Extracted Options %q", d.Cmdline)
+	return nil
 }
