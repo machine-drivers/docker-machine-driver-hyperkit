@@ -4,7 +4,10 @@
 [[projects]]
   branch = "master"
   name = "github.com/Azure/go-ansiterm"
-  packages = [".","winterm"]
+  packages = [
+    ".",
+    "winterm"
+  ]
   revision = "d6e3b3328b783f23731bc4d058875b0371ff8109"
 
 [[projects]]
@@ -14,12 +17,6 @@
   version = "v1.0.4"
 
 [[projects]]
-  branch = "master"
-  name = "github.com/c4milo/gotoolkit"
-  packages = ["."]
-  revision = "e37eeabad07ed8fbe83a0b222c963c480394f033"
-
-[[projects]]
   name = "github.com/cloudflare/cfssl"
   packages = ["log"]
   revision = "4e2dcbde500472449917533851bf4bae9bdff562"
@@ -27,21 +24,30 @@
 
 [[projects]]
   name = "github.com/docker/docker"
-  packages = ["pkg/term","pkg/term/windows"]
+  packages = [
+    "pkg/term",
+    "pkg/term/windows"
+  ]
   revision = "092cba3727bb9b4a2f0e922cd6c0f93ea270e363"
   version = "v1.13.1"
 
 [[projects]]
   name = "github.com/docker/machine"
-  packages = ["libmachine/drivers","libmachine/drivers/plugin","libmachine/drivers/plugin/localbinary","libmachine/drivers/rpc","libmachine/log","libmachine/mcnflag","libmachine/mcnutils","libmachine/ssh","libmachine/state","libmachine/version","version"]
+  packages = [
+    "libmachine/drivers",
+    "libmachine/drivers/plugin",
+    "libmachine/drivers/plugin/localbinary",
+    "libmachine/drivers/rpc",
+    "libmachine/log",
+    "libmachine/mcnflag",
+    "libmachine/mcnutils",
+    "libmachine/ssh",
+    "libmachine/state",
+    "libmachine/version",
+    "version"
+  ]
   revision = "9ba6da9ebd1140b65eb73e1ce08086ca72764c60"
   version = "v0.13.0"
-
-[[projects]]
-  name = "github.com/hooklift/iso9660"
-  packages = ["."]
-  revision = "d6245ab24065917ac16be2ff10ddd3934f41fe54"
-  version = "v1.0.0"
 
 [[projects]]
   branch = "master"
@@ -76,18 +82,29 @@
 [[projects]]
   branch = "master"
   name = "golang.org/x/crypto"
-  packages = ["curve25519","ed25519","ed25519/internal/edwards25519","internal/chacha20","poly1305","ssh","ssh/terminal"]
+  packages = [
+    "curve25519",
+    "ed25519",
+    "ed25519/internal/edwards25519",
+    "internal/chacha20",
+    "poly1305",
+    "ssh",
+    "ssh/terminal"
+  ]
   revision = "beaf6a35706e5032ae4c3fcf342c663c069f44d2"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
-  packages = ["unix","windows"]
+  packages = [
+    "unix",
+    "windows"
+  ]
   revision = "f6cff0780e542efa0c8e864dc8fa522808f6a598"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "b9ad6fa3f7107c1a9ad4790e34b1cf151ae4192e907e715c9ecc1c0f719a689d"
+  inputs-digest = "ae48f63945b290e569fd55f5ab47f013950da1d78f04f19100f6287ca1646737"
   solver-name = "gps-cdcl"
   solver-version = 1
