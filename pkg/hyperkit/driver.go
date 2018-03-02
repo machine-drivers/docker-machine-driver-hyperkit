@@ -35,7 +35,7 @@ import (
 	nfsexports "github.com/johanneswuerbach/nfsexports"
 	hyperkit "github.com/moby/hyperkit/go"
 	"github.com/pkg/errors"
-	pkgdrivers "github.com/praveenkumar/docker-machine-driver-hyperkit/pkg/drivers"
+	pkgdrivers "github.com/machine-drivers/docker-machine-driver-hyperkit/pkg/drivers"
 	"regexp"
 	"github.com/docker/machine/libmachine/mcnutils"
 )

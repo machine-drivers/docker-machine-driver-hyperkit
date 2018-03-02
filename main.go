@@ -17,7 +17,7 @@ package main
 
 import (
 	"github.com/docker/machine/libmachine/drivers/plugin"
-	"github.com/praveenkumar/docker-machine-driver-hyperkit/pkg/hyperkit"
+	"github.com/machine-drivers/docker-machine-driver-hyperkit/pkg/hyperkit"
 )
 
 func main() {
