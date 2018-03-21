@@ -26,11 +26,7 @@
 
 [[constraint]]
   name = "github.com/docker/machine"
-  version = "0.13.0"
-
-[[constraint]]
-  name = "github.com/hooklift/iso9660"
-  version = "1.0.0"
+  version = "0.14.0"
 
 [[constraint]]
   branch = "master"
