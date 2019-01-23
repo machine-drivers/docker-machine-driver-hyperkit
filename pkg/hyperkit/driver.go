@@ -226,8 +226,14 @@ func (d *Driver) Start() error {
 
 	if len(d.NFSShares) > 0 {
 		log.Info("Setting up NFS mounts")
+
 		// takes some time here for ssh / nfsd to work properly
-		time.Sleep(time.Second * 30)
+		err = d.waitForIP()
+		if err != nil {
+			log.Errorf("Failed to get IP address for VM: %s", err.Error())
+			return err
+		}
+
 		err = d.setupNFSShare()
 		if err != nil {
 			log.Errorf("NFS setup failed: %s", err.Error())
@@ -411,5 +417,43 @@ func (d *Driver) extractKernelOptions() error {
 	}
 
 	log.Debugf("Extracted Options %q", d.Cmdline)
+	return nil
+}
+
+func (d *Driver) waitForIP() error {
+	var ip string
+	var err error
+	mac, err := GetMACAddressFromUUID(d.UUID)
+	if err != nil {
+		return err
+	}
+
+	log.Infof("Waiting for VM to come online...")
+	for i := 1; i <= 60; i++ {
+
+		ip, err = GetIPAddressByMACAddress(mac)
+		if err != nil {
+			log.Debugf("Not there yet %d/%d, error: %s", i, 60, err)
+			time.Sleep(2 * time.Second)
+			continue
+		}
+
+		if ip != "" {
+			log.Debugf("Got an ip: %s", ip)
+			d.IPAddress = ip
+
+			break
+		}
+	}
+
+	if ip == "" {
+		return fmt.Errorf("Machine didn't return an IP after 120 seconds, aborting")
+	}
+
+	// Wait for SSH over NAT to be available before returning to user
+	if err := drivers.WaitForSSH(d); err != nil {
+		return err
+	}
+
 	return nil
 }
